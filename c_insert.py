@@ -9,6 +9,7 @@ import getopt
 import time
 import datetime
 import collections
+import threading
 
 def auth_provider(host):
     return {"username" : "cassandra", "password" : "cassandra"}
@@ -59,8 +60,6 @@ def connect(seeds, keyspace, datacenter=None, port=9042):
 def worker(threadnum, queue):
     # get connection
     #connection = connect(['sjm-ats-cas1', 'sjm-ats-cas2', 'sjm-ats-cas3'], keyspace='mfgprod', datacenter='DC1')
-    connection = connect(['node0','node1','node2'], keyspace='test', datacenter='us-west')
-    cqlstmt = connection.prepare("INSERT INTO tst (sernum, area, rectime) VALUES (?, ?, ?)")
 
     inserts = 0
     total_insert_time = 0.0
@@ -96,7 +95,7 @@ def main():
     thdata = Queue()
 
     for x in xrange(nclients):
-        t = Process(target=worker, args=(x, thdata))
+        t = threading.Thread(target=worker, args=(x, thdata))
         threads.append(t)
         t.start()
         time.sleep(0.1)
@@ -168,6 +167,9 @@ if __name__ == "__main__":
         ninserts
     except NameError:
         ninserts = 1000
+ 
+    connection = connect(['node0','node1','node2'], keyspace='test', datacenter='us-west')
+    cqlstmt = connection.prepare("INSERT INTO tst (sernum, area, rectime) VALUES (?, ?, ?)")
 
     main()
 
