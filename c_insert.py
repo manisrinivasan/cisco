@@ -16,7 +16,7 @@ def auth_provider(host):
 
 def connect(seeds, keyspace, datacenter=None, port=9042):
 
-    from cassandra.io.libevreactor import LibevConnection
+    # from cassandra.io.libevreactor import LibevConnection
     from cassandra.cluster import Cluster
     from cassandra.policies import DCAwareRoundRobinPolicy, RetryPolicy, ExponentialReconnectionPolicy
 
@@ -48,12 +48,13 @@ def connect(seeds, keyspace, datacenter=None, port=9042):
               reconnection_policy=ExponentialReconnectionPolicy(1, 60),
               load_balancing_policy=load_balancing_policy)
 
-    cluster.connection_class = LibevConnection
-    cluster.set_core_connections_per_host(0, 1)
-    cluster.set_core_connections_per_host(1, 0)
-    cluster.control_connection_timeout = 10.0
-    cluster.set_max_connections_per_host(2, 1)
+    # cluster.connection_class = LibevConnection
+    # cluster.set_core_connections_per_host(0, 1)
+    # cluster.set_core_connections_per_host(1, 0)
+    # cluster.control_connection_timeout = 10.0
+    # cluster.set_max_connections_per_host(2, 1)
     cluster.compression = False
+
     session = cluster.connect(keyspace)
     return session
 
