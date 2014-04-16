@@ -60,6 +60,7 @@ def worker(threadnum, queue):
     # get connection
     #connection = connect(['sjm-ats-cas1', 'sjm-ats-cas2', 'sjm-ats-cas3'], keyspace='mfgprod', datacenter='DC1')
     connection = connect(['node0','node1','node2'], keyspace='test', datacenter='us-west')
+    cqlstmt = connection.prepare("INSERT INTO tst (sernum, area, rectime) VALUES (?, ?, ?)")
 
     inserts = 0
     total_insert_time = 0.0
@@ -70,10 +71,10 @@ def worker(threadnum, queue):
         ni = random.randint(2,9)
         for i in xrange(ni):
 #             cqlstmt = "INSERT INTO tst (sernum, area, rectime) VALUES ('%s', '%s', '%s') USING CONSISTENCY ONE;" %(sernum, str(i), datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"))
-             cqlstmt = SimpleStatement("INSERT INTO tst (sernum, area, rectime) VALUES (%s, %s, %s)", consistency_level=ConsistencyLevel.ONE)
+             # cqlstmt = SimpleStatement("INSERT INTO tst (sernum, area, rectime) VALUES (%s, %s, %s)", consistency_level=ConsistencyLevel.ONE)
              start_ins_time = datetime.datetime.now()
              try:
-                connection.execute(cqlstmt, (sernum, str(i), datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")))
+                connection.execute(cqlstmt, [sernum, str(i), datetime.datetime.utcnow()])
              except:
                 print "exception"
 
