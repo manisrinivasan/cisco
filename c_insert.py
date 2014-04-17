@@ -61,7 +61,6 @@ def worker(threadnum, queue):
     # get connection
     #connection = connect(['sjm-ats-cas1', 'sjm-ats-cas2', 'sjm-ats-cas3'], keyspace='mfgprod', datacenter='DC1')
     connection = connect(['node0','node1','node2'], keyspace='test', datacenter='us-west')
-    cqlstmt = connection.prepare("INSERT INTO tst (sernum, area, rectime) VALUES (?, ?, ?)")
 
     inserts = 0
     total_insert_time = 0.0
@@ -70,20 +69,24 @@ def worker(threadnum, queue):
         sernum = 'SN%05X%07X' %(threadnum, inserts)
         # make 2 to 9 inserts for this sernum
         ni = random.randint(2,9)
+        stmt='BEGIN UNLOGGED BATCH '
         for i in xrange(ni):
-#             cqlstmt = "INSERT INTO tst (sernum, area, rectime) VALUES ('%s', '%s', '%s') USING CONSISTENCY ONE;" %(sernum, str(i), datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"))
-             # cqlstmt = SimpleStatement("INSERT INTO tst (sernum, area, rectime) VALUES (%s, %s, %s)", consistency_level=ConsistencyLevel.ONE)
-             start_ins_time = datetime.datetime.now()
-             try:
-                connection.execute(cqlstmt, [sernum, str(i), datetime.datetime.utcnow()])
-             except:
-                print "exception"
+             cqlstmt = " INSERT INTO tst (sernum, area, rectime) VALUES ('%s', '%s', '%s') ; " %(sernum, str(i), datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"))
+             stmt = stmt + cqlstmt
+        stmt = stmt + " APPLY BATCH"     
+        start_ins_time = datetime.datetime.now()
+        try:
+           connection.execute(stmt)
+        except:
+           e = sys.exc_info()
+           print e
 
-             stop_ins_time = datetime.datetime.now()
-             insert_time = (stop_ins_time - start_ins_time).total_seconds()
-             total_insert_time += insert_time
-             inserts += 1
-             if (inserts >= ninserts): break
+        stop_ins_time = datetime.datetime.now()
+        insert_time = (stop_ins_time - start_ins_time).total_seconds()
+        total_insert_time += insert_time
+        inserts += 1
+        if (inserts >= ninserts): break
+
     print 'Thread %d, performed %d inserts in %f secs' %(threadnum, ninserts, total_insert_time)
     connection.shutdown()
     # save all the thread specific data
